@@ -1,0 +1,459 @@
+#!/usr/bin/env python3
+
+import sys, string, os
+from fractions import Fraction
+
+CONST = 'CONST'
+
+def C(x):
+	return Node(CONST, x, ())
+
+def tostr(x):
+	
+	if isinstance(x, tuple) and not sum([not(isinstance(i, Fraction) and i.denominator==1) for i in x]):
+		return ''.join([chr(int(i)) for i in x])
+
+	return str(x)
+
+def typeof(x):
+	return str(type(x))
+
+instructions = {}
+
+class Instruction(object):
+	
+	def __init__(self, name, argc, fargc=0):
+		self.name = name
+		self.argc = argc
+		self.fargc = fargc
+		instructions[name] = self
+	
+	def __call__(self, func):
+		self.func = func
+		return func
+
+
+@Instruction('#', 1, 1)
+def insHASH(x, f):
+	x = x.eval()
+
+	if isinstance(x, tuple):
+		if f.argc == 1:
+			return tuple([f.func(C(i)) for i in x])
+		elif f.argc == 2:
+			if x:
+				c = x[0]
+				for i in range(1, len(x)):
+					c = f.func(C(c), C(x[i]))
+				return c
+			else:
+				return None
+		else:
+			raise TypeError('� of # must take either 1 or 2 arguments, not {}'.format(f.argc))
+
+	raise TypeError('Instruction # does not support type {} for argument 1'.format(typeof(x)))
+
+
+@Instruction('$', 1)
+def insDOLLAR(x):
+	x = x.eval()
+
+	if isinstance(x, tuple):
+		cmd = tostr(x)
+		return Fraction(os.system(cmd))
+
+	raise TypeError('Instruction $ does not support type {} for argument 1'.format(typeof(x)))
+
+
+@Instruction('*', 2)
+def insAST(x, y):
+	x = x.eval()
+	y = y.eval()
+
+	if isinstance(x, Fraction) and isinstance(y, Fraction):
+		return x * y
+	
+	if isinstance(x, Fraction) and isinstance(y, tuple):
+		return tuple([insAST(C(x), C(i)) for i in y])
+	
+	if isinstance(x, tuple) and isinstance(y, Fraction):
+		return x * int(y)
+	
+	raise TypeError('*')
+
+
+@Instruction('+', 2)
+def insPLUS(x, y):
+	x = x.eval()
+	y = y.eval()
+
+	if isinstance(x, Fraction) and isinstance(y, Fraction):
+		return x + y
+	
+	if isinstance(x, tuple) and isinstance(y, tuple):
+		nl = max(len(x), len(y))
+		ls = []
+		for i in range(nl):
+			ls.append(insPLUS(C(x[i%len(x)]), C(y[i%len(y)])))
+		return tuple(ls)
+
+	raise TypeError('+')
+
+
+@Instruction(',', 2)
+def insCOMMA(x, y):
+	x.eval()
+	return y.eval()
+
+
+@Instruction('-', 2)
+def insHYPHEN(x, y):
+	x = x.eval()
+	y = y.eval()
+
+	if isinstance(x, Fraction) and isinstance(y, Fraction):
+		return x - y
+	
+	raise TypeError('-')
+
+
+@Instruction('/', 2)
+def insFSLASH(x, y):
+	x = x.eval()
+	y = y.eval()
+
+	if isinstance(x, Fraction) and isinstance(y, Fraction):
+		return x / y
+	
+	return TypeError('/')
+
+
+@Instruction('0', 0)
+def ins0():
+	return Fraction(0)
+
+
+@Instruction('1', 0)
+def ins1():
+	return Fraction(1)
+
+
+@Instruction('2', 0)
+def ins2():
+	return Fraction(2)
+
+
+@Instruction('3', 0)
+def ins3():
+	return Fraction(3)
+
+
+@Instruction('4', 0)
+def ins4():
+	return Fraction(4)
+
+
+@Instruction('5', 0)
+def ins5():
+	return Fraction(5)
+
+
+@Instruction('6', 0)
+def ins6():
+	return Fraction(6)
+
+
+@Instruction('7', 0)
+def ins7():
+	return Fraction(7)
+
+
+@Instruction('8', 0)
+def ins8():
+	return Fraction(8)
+
+
+@Instruction('9', 0)
+def ins9():
+	return Fraction(9)
+
+
+@Instruction('?', 3)
+def insQMARK(x, y, z):
+	return y.eval() if x.eval() else z.eval()
+
+
+@Instruction('@', 1)
+def insAT(x):
+	x = x.eval()
+
+	if isinstance(x, tuple):
+		code = tostr(x)
+		comp = Compiler(code)
+		root = comp.root
+		res  = root.eval()
+		return res
+
+	raise TypeError('Instruction @ does not support type {} for argument 1'.format(typeof(x)))
+
+
+@Instruction('^', 1)
+def insCARAT(x):
+	x = x.eval()
+
+	if isinstance(x, Fraction):
+		return 1+x
+
+	raise TypeError('Instruction ^ does not support type {} for argument 1'.format(typeof(x)))
+
+
+@Instruction('_', 1)
+def ins_(x):
+	x = x.eval()
+
+	if isinstance(x, Fraction):
+		return x-1
+
+	raise TypeError('Instruction _ does not support type {} for argument 1'.format(typeof(x)))
+
+
+@Instruction('|', 1)
+def insPIPE(x):
+	x = x.eval()
+	
+	if isinstance(x, Fraction):
+		return abs(x)
+	
+	if isinstance(x, tuple):
+		return Fraction(sum([i*i for i in x]) ** 0.5)
+
+	raise TypeError('Instruction | does not support type {} for argument 1'.format(typeof(x)))
+
+
+@Instruction('¤', 1)
+def insCURRENCY(x):
+	while True:
+		x.eval()
+
+
+@Instruction('§', 1)
+def insSELECT(x):
+	i = None
+	while not i:
+		i = x.eval()
+	return i
+
+
+@Instruction('¨', 2)
+def insDIAERESIS(x, y):
+	x = x.eval()
+	y = y.eval()
+
+	if isinstance(x, Fraction) and isinstance(y, Fraction):
+		return tuple([Fraction(i) for i in range(int(x), int(y))])
+
+	raise TypeError('¨')
+
+
+@Instruction('¶', 1)
+def insPILCROW(x):
+	i = True
+	while i:
+		i = x.eval()
+	return i
+
+
+@Instruction('Č', 0)
+def insČ():
+	return (Fraction(ord(sys.stdin.read(1))),)
+
+
+@Instruction('č', 0)
+def insč():
+	inp = sys.stdin.read(1)
+	if inp:
+		return Fraction(ord(inp))
+	else:
+		sys.exit(0)
+
+
+@Instruction('ħ', 0)
+def insħ():
+	return (
+		Fraction(72),
+		Fraction(101),
+		Fraction(108),
+		Fraction(108),
+		Fraction(111),
+		Fraction(44),
+		Fraction(32),
+		Fraction(87),
+		Fraction(111),
+		Fraction(114),
+		Fraction(108),
+		Fraction(100),
+		Fraction(33)
+	)
+
+
+@Instruction('ň', 0)
+def insň():
+	
+	s = ''
+	i = None
+	try:
+		while True:
+			s += sys.stdin.read(1)
+			if s[-1] in string.whitespace:
+				break
+			i = Fraction(s)
+	except ValueError:
+		pass
+	
+	return i
+
+
+
+@Instruction('Ō', 1)
+def insŌ(x):
+	x = x.eval()
+	
+	if isinstance(x, Fraction):
+		print(x, end='')
+	
+	if isinstance(x, tuple):
+		for i in x:
+			insŌ(C(i))
+			print(' ', end='')
+
+	return x
+
+
+@Instruction('ō', 1)
+def insō(x):
+	x = x.eval()
+
+	if isinstance(x, Fraction):
+		print(chr(int(x)), end='')
+	
+	if isinstance(x, tuple):
+		for i in x:
+			insō(C(i))
+	
+	return x
+
+
+
+@Instruction('Ő', 1)
+def insŐ(x):
+	x = x.eval()
+
+	if isinstance(x, Fraction):
+		print(float(x), end='')
+	
+	if isinstance(x, tuple):
+		for i in x:
+			insŐ(C(i))
+			print(' ', end='')
+
+	return x
+
+
+@Instruction('Š', 0)
+def insŠ():
+	return tuple([Fraction(ord(i)) for i in sys.stdin.read()])
+
+
+@Instruction('š', 0)
+def insš():
+	return tuple([Fraction(ord(i)) for i in input()])
+
+
+@Instruction('Σ', 1)
+def insΣ(x):
+	x = x.eval()
+
+	if isinstance(x, tuple):
+		if x:
+			t = x[0]
+			for i in range(1, len(x)):
+				t = insPLUS(C(t), C(x[i]))
+			return t
+		else:
+			return Fraction(0)
+	
+	if isinstance(x, Fraction):
+		if x.denominator != 1:
+			raise ValueError('Unable to take digital sum of non-integer')
+
+		t = 0
+		for i in str(abs(x)):
+			t += int(i)
+
+		return Fraction(t)
+	
+	TypeError('Instruction Σ does not support type {} for argument 1'.format(typeof(x)))
+
+
+class Node(object):
+	
+	def __init__(self, ins, argv, insargs):
+		self.ins = ins
+		self.insargs = insargs
+		self.argv = argv
+	
+	def eval(self):
+		if self.ins == CONST:
+			return self.argv
+		else:
+			return self.ins.func(*self.argv, *self.insargs)
+
+class Compiler(object):
+	
+	def __init__(self, code):
+		self.code = code
+		self.root = self.parse()
+	
+	def next(self):
+		if self.code:
+			tk = self.code[0]
+			self.code = self.code[1:]
+			return self.next() if tk in string.whitespace else tk
+		else:
+			return 'Š'
+	
+	def parse(self):
+		tk = self.next()
+		if tk in instructions:
+			ins = instructions[tk]
+			insargs = [instructions[self.next()] for i in range(ins.fargc)]
+			argv = []
+			for i in range(ins.argc):
+				argv.append(self.parse())
+			return Node(ins, argv, insargs)
+		elif 4095 < ord(tk) < 65536:
+			return C(Fraction(ord(tk) - 4096))
+		else:
+			self.error('Error: Unknown instruction {}'.format(tk), True)
+
+	def error(self, err, fatal=False):
+		print(err, file=sys.stderr)
+		if fatal:
+			sys.exit(127)
+
+if __name__ == '__main__':
+	import argparse
+	parser = argparse.ArgumentParser(description='Official reference implementation of the @ language by Gemdude46.')
+	parser.add_argument(
+		'file',
+		type=argparse.FileType('r'),
+		default=sys.stdin,
+		help='The file containing the code to be run. Use - for stdin.',
+		nargs='?'
+	)
+	args = parser.parse_args()
+	code = args.file.read()
+	comp = Compiler(code)
+	root = comp.root
+	res  = root.eval()
+	print(tostr(res))

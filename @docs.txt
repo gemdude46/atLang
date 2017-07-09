@@ -1,0 +1,136 @@
+#� (vector x)
+If � takes 1 argument, it is mapped over x, if it takes 2, it is left-folded over x. If it takes 2 and x is empty, it returns NULL
+
+$ (string x)
+Runs x as a shell command and returns the status code
+
+* (number x, number y)
+Returns the product of x and y
+
+* (vector x, number y)
+Returns x repeated y times
+
+* (number x, vector y)
+Returns y with all its items multiplied by x
+
++ (number x, number y)
+Returns the sum of x and y
+
++ (vector x, vector y)
+Cycles the shorter of x and y until it is the same length as the longer one, then returns a new vector where each item is the sum of the same item of x and y
+
+, (* x, * y)
+Evaluates x then returns y
+
+- (number x, number y)
+Returns x - y
+
+/ (number x, number y)
+Returns x over y
+
+0 ()
+Returns the number 0
+
+1 ()
+Returns the number 1
+
+2 ()
+Returns the number 2
+
+3 ()
+Returns the number 3
+
+4 ()
+Returns the number 4
+
+5 ()
+Returns the number 5
+
+6 ()
+Returns the number 6
+
+7 ()
+Returns the number 7
+
+8 ()
+Returns the number 8
+
+9 ()
+Returns the number 9
+
+? (bool x, * y, * z)
+If x, evaluate and return y else evaluate and return z
+
+@ (string x)
+Evaluates x as @ code and returns the output
+
+\ (* x)
+Outputs a newline ( \n on POSIX, \r\n on NT ) then returns x
+
+^ (number x)
+Returns x + 1
+
+_ (number x)
+Returns x - 1
+
+| (number x)
+Returns |x|
+
+| (vector x)
+Returns the square root of the sum of the squares of the items of x
+
+¤ (* x)
+Repeatedly evaluates x. Forever.
+
+§ (bool x)
+Repeatedly evaluate x until it is true then return the last value
+
+¨ (number x, number y)
+Returns the range [x, y)
+
+¶ (bool x)
+Repeatedly evaluate x until it is false then return the last value
+
+Č ()
+Reads a character from STDIN and returns it as a string
+
+č ()
+Reads a character from STDIN and returns its codepoint
+
+ħ ()
+Returns "Hello, World!"
+
+ň ()
+Reads a number from STDIN and returns it
+
+Ō (number x)
+Outputs x as a fraction and then returns x
+
+Ō (vector x)
+Calls itself on each item of x but puts a space between outputs then returns x
+
+ō (number x)
+Outputs the character with codepoint floor(x)
+
+ō (vector x)
+Calls itself on each item of x, then returns x
+
+Ő (number x)
+Outputs the decimal representation of x then returns x
+
+Ő (vector x)
+Calls itself on each item of x but puts a space between outputs then returns x
+
+Š ()
+Reads STDIN until EOF and returns it as a string
+
+š ()
+Reads STDIN until a newline and returns it as a string
+
+Σ (number x)
+Returns the digital sum of x
+
+Σ (vector x)
+Returns the sum of the items of x
+
+
