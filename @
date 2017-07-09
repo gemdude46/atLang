@@ -197,6 +197,12 @@ def insAT(x):
 	raise TypeError('Instruction @ does not support type {} for argument 1'.format(typeof(x)))
 
 
+@Instruction('\\', 1)
+def insBSLASH(x):
+	print()
+	return x.eval()
+
+
 @Instruction('^', 1)
 def insCARAT(x):
 	x = x.eval()
@@ -418,12 +424,27 @@ class Compiler(object):
 		if self.code:
 			tk = self.code[0]
 			self.code = self.code[1:]
+			if tk == '{':
+				brkdep = 1
+				s = []
+				while brkdep and self.code:
+					c = self.code[0]
+					self.code = self.code[1:]
+					if c == '{':
+						brkdep += 1
+					if c == '}':
+						brkdep -= 1
+					if brkdep:
+						s.append(Fraction(ord(c)))
+				return tuple(s)
 			return self.next() if tk in string.whitespace else tk
 		else:
 			return 'Š'
 	
 	def parse(self):
 		tk = self.next()
+		if isinstance(tk, tuple):
+			return C(tk)
 		if tk in instructions:
 			ins = instructions[tk]
 			insargs = [instructions[self.next()] for i in range(ins.fargc)]
